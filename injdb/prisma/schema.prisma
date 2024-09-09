@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String         @unique
+  document     String         @unique
+  password     String
+  phone        String         @unique
+  attempts     Int            @default(0)
+  status       UserStatus     @default(PENDING)
+  type         UserType
+  dependents   Dependents[]
+  subscription Subscription[]
+  meeting      UserMeeting[]
+}
+
+model Dependents {
+  id           Int            @id @default(autoincrement())
+  name         String
+  userId       Int
+  observation  String?
+  subscription Subscription[]
+  user         User           @relation(fields: [userId], references: [id])
+}
+
+model Book {
+  id        Int      @id @default(autoincrement())
+  name      String
+  author    String
+  year      Int
+  publisher String
+  url       String
+  type      BookType
+}
+
+model Income {
+  id          Int              @id @default(autoincrement())
+  amount      Float
+  type        IncomeType
+  description String?
+  date        DateTime
+}
+
+model Event {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  capacity     Int
+  subscription Subscription[]
+}
+
+model Meeting {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  user        UserMeeting[]
+}
+
+model UserMeeting {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  meetingId Int
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id                        Int                  @id @default(autoincrement())
+  dependentId               Int?
+  userId                    Int
+  eventId                   Int
+  status                    SubscriptionStatus   @default(PENDING)
+  payment                   SubscriptionPayment
+  dependents                Dependents?          @relation(fields: [dependentId], references: [id])
+  event                     Event                @relation(fields: [eventId], references: [id])
+  user                      User                 @relation(fields: [userId], references: [id])
+  cancelRequest             Boolean?             @default(false)
+  cancelRequestApprovedBy   Int?
+  cancelRequestApprovalDate DateTime?
+  cancelRequestStatus       CancelRequestStatus?
+}
+
+model Advertise {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  url         String
+  show        Boolean
+}
+
+model Expenditure {
+  id                Int             @id @default(autoincrement())
+  type              ExpenditureType @relation(fields: [expenditureTypeId], references: [id])
+  value             Decimal
+  description       String?
+  installments      Boolean
+  parcels           String?
+  fee               Decimal?
+  dueDate           DateTime
+  payedDate         DateTime?
+  expenditureTypeId Int
+}
+
+model ExpenditureType {
+  id          Int           @id @default(autoincrement())
+  name        String
+  Expenditure Expenditure[]
+}
+
+enum UserType {
+  ADMIN
+  MEMBER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  PENDING
+}
+
+enum IncomeType {
+  TITHE
+  DONATION
+  OTHER
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum SubscriptionPayment {
+  CASH
+  PIX
+}
+
+enum CancelRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookType {
+  GOSPEL
+  CHILD
+  DEVOTIONAL
+  THEOLOGY
+  BIBLE_STUDY
+  CHRISTIAN_FICTION
+  SPIRITUAL_SELF_HELP
+  BIOGRAPHY
+  MISSIONS
+  CHRISTIAN_EDUCATION
+  FAMILY
+  CHRISTIAN_LEADERSHIP
+}
